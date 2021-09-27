@@ -1,0 +1,32 @@
+{
+  "name": "paytap-backend",
+  "version": "0.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "run:dev": "ts-node-dev --respawn --rs src/main.ts"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "8.5.4",
+    "@types/node": "15.12.5",
+    "@types/pino": "6.3.8",
+    "eslint": "7.29.0",
+    "pino-pretty": "5.1.0",
+    "prettier": "2.3.2",
+    "ts-node": "10.0.0",
+    "ts-node-dev": "1.1.7",
+    "typescript": "4.3.4"
+  },
+  "dependencies": {
+    "@prisma/client": "2.26.0",
+    "fastify": "3.18.1",
+    "fastify-cors": "6.0.1",
+    "jsonwebtoken": "8.5.1",
+    "mksuid": "0.2.0",
+    "pg": "8.6.0",
+    "pino": "6.11.3",
+    "prisma": "2.26.0",
+    "slonik": "23.8.3",
+    "zod": "3.2.0"
+  }
+}

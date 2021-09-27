@@ -1,0 +1,146 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["napi"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgres://username:password@localhost:5432/paytap"
+}
+
+enum USER_TYPE_ENUM {
+  NONE
+  ADMIN
+  POS
+  SCHOOL_STAFF
+  STUDENT
+}
+
+model users {
+  id              String            @id @db.VarChar(30)
+  username        String            @unique @db.VarChar(50)
+  password        String
+  email           String?           @db.VarChar(100)
+  createdAt       DateTime          @default(now()) @db.Timestamp(6)
+  type            USER_TYPE_ENUM    @default(NONE)
+  accounts        accounts[]
+  admin           admins?           @relation("admins_userIDTousers")
+  posTransactions posTransactions[]
+  posUser         posUsers?
+  schoolStaff     schoolStaff?      @relation("schoolStaff_userIDTousers")
+  student         students?         @relation("students_userIDTousers")
+}
+
+model admins {
+  id        String   @id @db.VarChar(30)
+  firstName String   @db.VarChar(50)
+  lastName  String   @db.VarChar(50)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  userID    String   @unique @db.VarChar(30)
+  user      users    @relation("admins_userIDTousers", fields: [userID], references: [id])
+}
+
+model schoolStaff {
+  id        String   @id @db.VarChar(30)
+  firstName String   @db.VarChar(50)
+  lastName  String   @db.VarChar(50)
+  userID    String   @unique @db.VarChar(30)
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  schoolID  String   @db.VarChar(30)
+  school    schools  @relation(fields: [schoolID], references: [id])
+  user      users    @relation("schoolStaff_userIDTousers", fields: [userID], references: [id])
+}
+
+model students {
+  id              String   @id @db.VarChar(30)
+  firstName       String   @db.VarChar(50)
+  lastName        String   @db.VarChar(50)
+  schoolID        String   @db.VarChar(30)
+  admissionNumber String   @db.VarChar(10)
+  createdAt       DateTime @default(now()) @db.Timestamp(6)
+  userID          String   @unique @db.VarChar(30)
+  school          schools  @relation(fields: [schoolID], references: [id])
+  user            users    @relation("students_userIDTousers", fields: [userID], references: [id])
+
+  @@unique([schoolID, admissionNumber], name: "students_schoolid_admissionnumber_key")
+}
+
+model accounts {
+  id        String    @id @db.VarChar(30)
+  userID    String    @db.VarChar(30)
+  balance   Int       @default(0)
+  createdAt DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt DateTime  @default(now()) @db.Timestamp(6)
+  label     String    @default("main") @db.VarChar(10)
+  user      users     @relation(fields: [userID], references: [id])
+  credits   credits[]
+  debits    debits[]
+
+  @@unique([userID, label], name: "accounts_userID_label_key")
+}
+
+model credits {
+  id             String         @id @db.VarChar(30)
+  accountID      String         @db.VarChar(30)
+  journalEntryId String         @db.VarChar(30)
+  amount         Int
+  createdAt      DateTime       @default(now()) @db.Timestamp(6)
+  account        accounts       @relation(fields: [accountID], references: [id])
+  journalEntry   journalEntries @relation(fields: [journalEntryId], references: [id])
+}
+
+model debits {
+  id             String         @id @db.VarChar(30)
+  accountID      String         @db.VarChar(30)
+  journalEntryID String         @db.VarChar(30)
+  amount         Int
+  createdAt      DateTime       @default(now()) @db.Timestamp(6)
+  account        accounts       @relation(fields: [accountID], references: [id])
+  journalEntry   journalEntries @relation(fields: [journalEntryID], references: [id])
+}
+
+model journalEntries {
+  id              String            @id @db.VarChar(30)
+  amount          Int
+  description     String?
+  createdAt       DateTime          @default(now()) @db.Timestamp(6)
+  credits         credits[]
+  debits          debits[]
+  posTransactions posTransactions[]
+}
+
+model schools {
+  id          String        @id @db.VarChar(30)
+  name        String
+  code        String        @unique @db.VarChar(7)
+  createdAt   DateTime      @default(now()) @db.Timestamp(6)
+  posUsers    posUsers[]
+  schoolStaff schoolStaff[]
+  students    students[]
+}
+
+model posUsers {
+  id              String            @id @db.VarChar(30)
+  userID          String            @unique @db.VarChar(30)
+  schoolID        String            @db.VarChar(30)
+  createdAt       DateTime          @default(now()) @db.Timestamp(6)
+  lastSeenAt      DateTime          @default(now()) @db.Timestamp(6)
+  description     String
+  school          schools           @relation(fields: [schoolID], references: [id])
+  user            users             @relation(fields: [userID], references: [id])
+  posTransactions posTransactions[]
+}
+
+model posTransactions {
+  id             String         @id @db.VarChar(30)
+  buyerID        String         @db.VarChar(30)
+  posID          String         @db.VarChar(30)
+  amount         Int
+  description    String
+  createdAt      DateTime       @default(now())
+  receipt        Json
+  journalEntryID String         @db.VarChar(30)
+  buyer          users          @relation(fields: [buyerID], references: [id])
+  journalEntry   journalEntries @relation(fields: [journalEntryID], references: [id])
+  pos            posUsers?      @relation(fields: [posID], references: [id])
+}
